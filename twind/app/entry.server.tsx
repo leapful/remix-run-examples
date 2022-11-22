@@ -34,8 +34,6 @@ const twindStream = () => {
   }
 }
 
-const buildTwindStream = twindStream();
-
 const handleRequest = (
   request: Request,
   responseStatusCode: number,
@@ -70,6 +68,7 @@ const handleBotRequest = (
         <RemixServer context={remixContext} url={request.url} />,
       {
         onAllReady: () => {
+          const buildTwindStream = twindStream();
           const { extractStyles, body } = buildTwindStream();
 
           responseHeaders.set("Content-Type", "text/html");
@@ -110,6 +109,7 @@ const handleBrowserRequest = (
       <RemixServer context={remixContext} url={request.url} />,
       {
         onShellReady: () => {
+          const buildTwindStream = twindStream();
           const { extractStyles, body } = buildTwindStream();
 
           responseHeaders.set("Content-Type", "text/html");
