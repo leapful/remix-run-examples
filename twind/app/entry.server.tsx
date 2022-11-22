@@ -17,7 +17,6 @@ const twindStream = () => {
       transform(chunk, encoding, callback) {
         const {html, css} = extract(chunk.toString(), tw);
         if (css) {
-            console.log(css)
             cssCaches.push(css)
         }
         callback(null, html);
