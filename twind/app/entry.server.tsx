@@ -1,13 +1,41 @@
 import { PassThrough } from "stream";
 
+import { extract, tw } from "twind";
 import type { EntryContext } from "@remix-run/node";
 import { Response } from "@remix-run/node";
 import { RemixServer } from "@remix-run/react";
-import inline from "@twind/with-remix/server";
 import isbot from "isbot";
 import { renderToPipeableStream } from "react-dom/server";
 
 const ABORT_DELAY = 5000;
+
+const twindStream = () => {
+  const cssCaches: string[] = [];
+
+  return () => {
+    const extractStyles = new PassThrough({
+      transform(chunk, encoding, callback) {
+        const {html, css} = extract(chunk.toString(), tw);
+        if (css) {
+            console.log(css)
+            cssCaches.push(css)
+        }
+        callback(null, html);
+      }
+    });
+
+    const body = new PassThrough({
+      transform(chunk, encoding, callback) {
+        callback(null, chunk.toString().replace('</head>',
+            `<style data-twind>${cssCaches.join('')}</style></head>`))
+      }
+    });
+
+    return { extractStyles, body };
+  }
+}
+
+const buildTwindStream = twindStream();
 
 const handleRequest = (
   request: Request,
@@ -40,10 +68,10 @@ const handleBotRequest = (
     let didError = false;
 
     const { pipe, abort } = renderToPipeableStream(
-      inline(<RemixServer context={remixContext} url={request.url} />),
+        <RemixServer context={remixContext} url={request.url} />,
       {
         onAllReady: () => {
-          const body = new PassThrough();
+          const { extractStyles, body } = buildTwindStream();
 
           responseHeaders.set("Content-Type", "text/html");
 
@@ -54,7 +82,7 @@ const handleBotRequest = (
             })
           );
 
-          pipe(body);
+          pipe(extractStyles).pipe(body);
         },
         onShellError: (error: unknown) => {
           reject(error);
@@ -80,10 +108,10 @@ const handleBrowserRequest = (
     let didError = false;
 
     const { pipe, abort } = renderToPipeableStream(
-      inline(<RemixServer context={remixContext} url={request.url} />),
+      <RemixServer context={remixContext} url={request.url} />,
       {
         onShellReady: () => {
-          const body = new PassThrough();
+          const { extractStyles, body } = buildTwindStream();
 
           responseHeaders.set("Content-Type", "text/html");
 
@@ -94,7 +122,7 @@ const handleBrowserRequest = (
             })
           );
 
-          pipe(body);
+          pipe(extractStyles).pipe(body)
         },
         onShellError: (error: unknown) => {
           reject(error);
