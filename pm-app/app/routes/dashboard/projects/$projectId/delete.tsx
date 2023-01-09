@@ -1,10 +1,10 @@
-import type { ActionFunction } from "@remix-run/node";
+import type { ActionArgs } from "@remix-run/node";
 import { redirect } from "@remix-run/node";
 
 import { deleteProject } from "~/db.server";
 import { requireUser } from "~/session.server";
 
-export const action: ActionFunction = async ({ request, params }) => {
+export const action = async ({ params, request }: ActionArgs) => {
   await requireUser(request, {
     redirect: "/sign-in",
   });
@@ -12,8 +12,8 @@ export const action: ActionFunction = async ({ request, params }) => {
   if (projectId) {
     try {
       await deleteProject(projectId);
-    } catch (e) {
-      console.error(e);
+    } catch (error: unknown) {
+      console.error(error);
     }
   }
   return redirect("/dashboard");

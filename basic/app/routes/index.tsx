@@ -1,4 +1,4 @@
-import type { LoaderFunction, MetaFunction } from "@remix-run/node";
+import type { MetaFunction } from "@remix-run/node";
 import { json } from "@remix-run/node";
 import { Link, useLoaderData } from "@remix-run/react";
 
@@ -10,8 +10,8 @@ type IndexData = {
 // Loaders provide data to components and are only ever called on the server, so
 // you can connect to a database or run any server side code you want right next
 // to the component that renders it.
-// https://remix.run/api/conventions#loader
-export const loader: LoaderFunction = async () => {
+// https://remix.run/route/loader
+export const loader = async () => {
   const data: IndexData = {
     resources: [
       {
@@ -43,21 +43,19 @@ export const loader: LoaderFunction = async () => {
     ],
   };
 
-  // https://remix.run/api/remix#json
+  // https://remix.run/utils/json
   return json(data);
 };
 
-// https://remix.run/api/conventions#meta
-export const meta: MetaFunction = () => {
-  return {
-    title: "Remix Starter",
-    description: "Welcome to remix!",
-  };
-};
+// https://remix.run/route/meta
+export const meta: MetaFunction = () => ({
+  title: "Remix Starter",
+  description: "Welcome to remix!",
+});
 
 // https://remix.run/guides/routing#index-routes
 export default function Index() {
-  const data = useLoaderData<IndexData>();
+  const data = useLoaderData<typeof loader>();
 
   return (
     <div className="remix__page">

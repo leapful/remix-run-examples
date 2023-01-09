@@ -1,4 +1,4 @@
-import type { LoaderFunction, MetaFunction } from "@remix-run/node";
+import type { MetaFunction } from "@remix-run/node";
 import { json } from "@remix-run/node";
 // import { json } from "@remix-run/node";
 import {
@@ -20,7 +20,7 @@ import * as gtag from "~/utils/gtags.client";
  * @description
  * If you would like to include the development env values in your browser bundle AKA
  * set some global values on the window object, take a look at these docs here:
- * https://remix.run/docs/en/v1/guides/envvars#server-environment-variables
+ * https://remix.run/guides/envvars#server-environment-variables
  */
 // export async function loader() {
 //   return json({
@@ -30,13 +30,9 @@ import * as gtag from "~/utils/gtags.client";
 //   });
 // }
 
-type LoaderData = {
-  gaTrackingId: string | undefined;
-};
-
 // Load the GA tracking id from the .env
-export const loader: LoaderFunction = async () => {
-  return json<LoaderData>({ gaTrackingId: process.env.GA_TRACKING_ID });
+export const loader = async () => {
+  return json({ gaTrackingId: process.env.GA_TRACKING_ID });
 };
 
 export const meta: MetaFunction = () => ({
@@ -47,7 +43,7 @@ export const meta: MetaFunction = () => ({
 
 export default function App() {
   const location = useLocation();
-  const { gaTrackingId } = useLoaderData<LoaderData>();
+  const { gaTrackingId } = useLoaderData<typeof loader>();
 
   useEffect(() => {
     if (gaTrackingId?.length) {

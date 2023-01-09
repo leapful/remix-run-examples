@@ -7,12 +7,12 @@ import {
   ScrollRestoration,
 } from "@remix-run/react";
 import { useEffect } from "react";
+import { useEventSource } from "remix-utils";
 
-import { useEventSource } from "~/use-event-source";
 import { useRevalidator } from "~/use-revalidator";
 
-import styles from "./styles.processed.css";
 import icons from "./icons.svg";
+import styles from "./styles.processed.css";
 
 export const meta: MetaFunction = () => ({
   charset: "utf-8",
@@ -48,10 +48,4 @@ function useRealtimeIssuesRevalidation() {
   useEffect(() => {
     revalidator.revalidate();
   }, [data, revalidator]);
-}
-
-// FIXME: Pointless action for revalidation until:
-// https://github.com/remix-run/remix/issues/4485
-export function action() {
-  return { ok: true };
 }

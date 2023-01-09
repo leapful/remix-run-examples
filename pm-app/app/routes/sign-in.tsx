@@ -1,7 +1,7 @@
 import type {
-  ActionFunction,
+  ActionArgs,
   LinksFunction,
-  LoaderFunction,
+  LoaderArgs,
   MetaFunction,
 } from "@remix-run/node";
 import { json } from "@remix-run/node";
@@ -20,17 +20,15 @@ import { useFocusOnFormError } from "~/utils/react";
 
 import routeStyles from "../styles/routes/sign-in.css";
 
-export const meta: MetaFunction = () => {
-  return {
-    title: "Sign In | PM Camp",
-  };
-};
+export const meta: MetaFunction = () => ({
+  title: "Sign In | PM Camp",
+});
 
-export const links: LinksFunction = () => {
-  return [{ href: routeStyles, rel: "stylesheet" }];
-};
+export const links: LinksFunction = () => [
+  { href: routeStyles, rel: "stylesheet" },
+];
 
-export const action: ActionFunction = async ({ request }) => {
+export const action = async ({ request }: ActionArgs) => {
   // 1. Get/setup form data from the request
   const formData = await request.formData();
   const email = formData.get("email");
@@ -47,8 +45,11 @@ export const action: ActionFunction = async ({ request }) => {
     typeof password !== "string" ||
     (redirectTo && typeof redirectTo !== "string")
   ) {
-    return json<ActionData>(
-      { formError: `Something went wrong. Please try again later.` },
+    return json(
+      {
+        formError: `Something went wrong. Please try again later.`,
+        fieldErrors,
+      },
       400
     );
   }
@@ -60,11 +61,11 @@ export const action: ActionFunction = async ({ request }) => {
   } else {
     try {
       validateEmail(email);
-    } catch (e) {
-      if (e instanceof Error) {
-        fieldErrors.email = e.message;
-      } else if (typeof e === "string") {
-        fieldErrors.email = e;
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        fieldErrors.email = error.message;
+      } else if (typeof error === "string") {
+        fieldErrors.email = error;
       } else {
         fieldErrors.email = "There was an error with this field";
       }
@@ -76,11 +77,11 @@ export const action: ActionFunction = async ({ request }) => {
   } else {
     try {
       validatePassword(password);
-    } catch (e) {
-      if (e instanceof Error) {
-        fieldErrors.password = e.message;
-      } else if (typeof e === "string") {
-        fieldErrors.password = e;
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        fieldErrors.password = error.message;
+      } else if (typeof error === "string") {
+        fieldErrors.password = error;
       } else {
         fieldErrors.password = "There was an error with this field";
       }
@@ -88,24 +89,24 @@ export const action: ActionFunction = async ({ request }) => {
   }
 
   if (Object.values(fieldErrors).some(Boolean)) {
-    return json<ActionData>({ fieldErrors, fields }, 400);
+    return json({ fieldErrors, fields }, 400);
   }
 
   // 3. Attempt login
   let user: User | null;
   try {
     user = await login(email, password);
-  } catch (e) {
+  } catch (error: unknown) {
     let formError: string;
-    if (e instanceof Error) {
-      formError = e.message;
-    } else if (typeof e === "string") {
-      formError = e;
+    if (error instanceof Error) {
+      formError = error.message;
+    } else if (typeof error === "string") {
+      formError = error;
     } else {
       formError = "There was an error logging in. Please try again later.";
     }
 
-    return json<ActionData>({ fields, formError }, 401);
+    return json({ fields, formError }, 401);
   }
 
   // 4. Create a user session with the user's ID
@@ -116,7 +117,7 @@ export const action: ActionFunction = async ({ request }) => {
   });
 };
 
-export const loader: LoaderFunction = async ({ request }) => {
+export const loader = async ({ request }: LoaderArgs) => {
   await redirectUser(request, {
     redirect: "/dashboard",
   });
@@ -124,8 +125,7 @@ export const loader: LoaderFunction = async ({ request }) => {
 };
 
 export default function SignIn() {
-  const actionData = useActionData<ActionData>();
-  const { fieldErrors, fields, formError } = actionData || {};
+  const { fieldErrors, fields, formError } = useActionData<typeof action>();
   const [searchParams] = useSearchParams();
   const formRef = React.useRef<HTMLFormElement>(null);
 
@@ -194,12 +194,6 @@ export default function SignIn() {
       </p>
     </div>
   );
-}
-
-interface ActionData {
-  formError?: string;
-  fieldErrors?: FieldErrors;
-  fields?: Record<TextFields, string>;
 }
 
 type FieldErrors = Record<TextFields, string | null>;
